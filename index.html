@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beszédhangok Képzése - Játék</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        /* Játéktér konténer */
+        .game-container {
+            position: relative;
+            width: 800px; 
+            height: 450px; 
+            background-image: url('beszed-kep.jpg'); /* Ellenőrizd a kép nevét! */
+            background-size: cover;
+            background-position: center;
+            border: 5px solid #333;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        /* A "buborékok" */
+        .drop-zone {
+            position: absolute;
+            width: 140px; /* Alap szélesség növelve 140px-re */
+            height: 42px;
+            background-color: #fff; 
+            border: 2px dashed #888;
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        /* POZÍCIÓK JAVÍTVA */
+        
+        /* Bal oldal */
+        #zone-szajureg { top: 38%; left: 13%; }
+        #zone-garat { top: 65%; left: 21%; } 
+        #zone-nyelocso { top: 82%; left: 14%; }
+
+        /* Jobb oldal */
+        #zone-gegefo { top: 68%; left: 65%; width: 170xp; }
+        
+        /* ITT A JAVÍTÁS: Szélesebb és jobbra tolva */
+        #zone-hangszalak { 
+            top: 80%; 
+            left: 60%;       /* Kicsit jobbra tolva */
+            width: 170px;    /* Sokkal szélesebb, hogy a hosszú szót eltakarja */
+        }
+        
+        #zone-legcso { top: 92%; left: 50%; width: 170xp; }
+
+
+        .drop-zone.hovered {
+            background-color: #e0e0e0;
+            border-color: #333;
+            transform: scale(1.05);
+        }
+
+        /* Ha helyes a válasz */
+        .drop-zone.correct {
+            border: 2px solid #4CAF50;
+            background-color: #dff0d8;
+            color: #2e7d32;
+        }
+        
+        /* A pipa ikon */
+        .checkmark {
+            display: none;
+            margin-left: 5px;
+            color: #4CAF50;
+            font-size: 1.2em;
+        }
+
+        /* A húzható elemek doboza */
+        .words-container {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .draggable {
+            background-color: #ffeb3b;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: grab;
+            font-weight: bold;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            user-select: none;
+            transition: transform 0.2s;
+        }
+
+        .draggable:active {
+            cursor: grabbing;
+            transform: scale(0.9);
+        }
+
+        /* Számláló és üzenet */
+        .status-bar {
+            width: 800px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .score-board {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .message {
+            color: #4CAF50;
+            font-weight: bold;
+            display: none; 
+            font-size: 1.5em;
+            animation: popIn 0.5s ease;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Beszédhangok Képzése - Játék</h1>
+
+    <div class="status-bar">
+        <div class="score-board">Találatok: <span id="score">0</span> / 6</div>
+        <div id="success-message" class="message">Ügyes vagy! Minden helyes! 🎉</div>
+    </div>
+
+    <div class="game-container">
+        <div class="drop-zone" id="zone-szajureg" data-answer="szajureg"></div>
+        <div class="drop-zone" id="zone-garat" data-answer="garat"></div>
+        <div class="drop-zone" id="zone-nyelocso" data-answer="nyelocso"></div>
+
+        <div class="drop-zone" id="zone-gegefo" data-answer="gegefo"></div>
+        <div class="drop-zone" id="zone-hangszalak" data-answer="hangszalak"></div>
+        <div class="drop-zone" id="zone-legcso" data-answer="legcso"></div>
+    </div>
+
+    <h3>Húzd a szavakat a megfelelő helyre!</h3>
+    
+    <div class="words-container" id="words-container">
+        <div class="draggable" draggable="true" id="drag-nyelocso">Nyelőcső</div>
+        <div class="draggable" draggable="true" id="drag-szajureg">Szájüreg</div>
+        <div class="draggable" draggable="true" id="drag-legcso">Légcső</div>
+        <div class="draggable" draggable="true" id="drag-garat">Garat</div>
+        <div class="draggable" draggable="true" id="drag-hangszalak">Hangszálak</div>
+        <div class="draggable" draggable="true" id="drag-gegefo">Gégefő</div>
+    </div>
+
+    <script>
+        const draggables = document.querySelectorAll('.draggable');
+        const dropZones = document.querySelectorAll('.drop-zone');
+        const scoreDisplay = document.getElementById('score');
+        const successMessage = document.getElementById('success-message');
+        
+        let score = 0;
+        const totalItems = 6;
+
+        draggables.forEach(draggable => {
+            draggable.addEventListener('dragstart', dragStart);
+        });
+
+        dropZones.forEach(zone => {
+            zone.addEventListener('dragover', dragOver);
+            zone.addEventListener('dragleave', dragLeave);
+            zone.addEventListener('drop', drop);
+        });
+
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+            setTimeout(() => {
+                e.target.style.display = 'none';
+            }, 0);
+        }
+
+        document.addEventListener("dragend", function(event) {
+            event.target.style.display = "block";
+        });
+
+        function dragOver(e) {
+            e.preventDefault();
+            if (!e.target.classList.contains('correct')) {
+                e.target.classList.add('hovered');
+            }
+        }
+
+        function dragLeave(e) {
+            e.target.classList.remove('hovered');
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            e.target.classList.remove('hovered');
+
+            if (e.target.classList.contains('correct')) return;
+
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const answer = e.target.getAttribute('data-answer');
+            
+            if (id.includes(answer)) {
+                e.target.classList.add('correct');
+                e.target.innerHTML = draggableElement.innerText + ' <span class="checkmark">✔</span>';
+                
+                const check = e.target.querySelector('.checkmark');
+                check.style.display = 'inline';
+
+                draggableElement.parentNode.removeChild(draggableElement);
+
+                score++;
+                scoreDisplay.innerText = score;
+
+                if (score === totalItems) {
+                    successMessage.style.display = 'block';
+                }
+            } else {
+                alert("Nem jó helyre húztad, próbáld újra!");
+            }
+        }
+    </script>
+</body>
+</html>
